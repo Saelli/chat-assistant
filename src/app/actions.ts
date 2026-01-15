@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { analyzeUserQuery } from '@/ai/flows/analyze-user-query';
 import { ai } from '@/ai/genkit';
 import type { Message } from '@/lib/types';
-import { generateText } from 'genkit';
 
 const contactHumanSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -38,7 +37,7 @@ export async function submitUserMessage(history: Message[], userMessage: string)
     };
   }
   
-  const response = await generateText({
+  const response = await ai.generate({
     model: ai.model,
     prompt: `You are a helpful assistant for a company that helps users build websites and use APIs.
     The user is asking a question. Your response should be helpful, concise, and friendly.
@@ -60,6 +59,6 @@ export async function submitUserMessage(history: Message[], userMessage: string)
   return {
     id: Date.now().toString(),
     role: 'assistant',
-    content: response,
+    content: response.text,
   };
 }
