@@ -131,7 +131,7 @@ export function HumanForm({ onBack }: HumanFormProps) {
           />
           <Button type="submit" disabled={isPending} className="w-full">
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Submit
+            Send Email
           </Button>
         </form>
       </Form>
