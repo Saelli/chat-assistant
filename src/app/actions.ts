@@ -5,6 +5,7 @@ import { analyzeUserQuery } from '@/ai/flows/analyze-user-query';
 import { ai } from '@/ai/genkit';
 import type { Message } from '@/lib/types';
 import { sendConfirmationEmail } from '@/ai/flows/send-confirmation-email';
+import { sendCustomerServiceEmail } from '@/ai/flows/send-customer-service-email';
 
 const contactHumanSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -23,7 +24,16 @@ export async function contactHumanSupport(values: z.infer<typeof contactHumanSch
   console.log('Human support request:', parsed.data);
 
   try {
-    const emailResult = await sendConfirmationEmail(parsed.data);
+    const [serviceEmailResult, emailResult] = await Promise.all([
+      sendCustomerServiceEmail(parsed.data),
+      sendConfirmationEmail(parsed.data)
+    ]);
+    
+    if (!serviceEmailResult.success) {
+      // Log this failure but don't block user feedback if user email was ok
+      console.error("Failed to send customer service email.");
+    }
+
     if (!emailResult.success) {
       return { success: false, message: 'Your message was received, but we failed to send a confirmation email.' };
     }
