@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { analyzeUserQuery } from '@/ai/flows/analyze-user-query';
 import { ai } from '@/ai/genkit';
 import type { Message } from '@/lib/types';
+import { sendConfirmationEmail } from '@/ai/flows/send-confirmation-email';
 
 const contactHumanSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -18,11 +19,21 @@ export async function contactHumanSupport(values: z.infer<typeof contactHumanSch
     return { success: false, message: 'Invalid form data. Please check your inputs.' };
   }
   
-  // In a real application, you would send an email or create a support ticket here.
-  // For this demo, we'll just simulate a success response.
+  // In a real application, you would create a support ticket here.
   console.log('Human support request:', parsed.data);
 
-  return { success: true, message: "Thank you for reaching out! A support agent will be in touch with you via email shortly." };
+  try {
+    const emailResult = await sendConfirmationEmail(parsed.data);
+    if (!emailResult.success) {
+      return { success: false, message: 'Your message was received, but we failed to send a confirmation email.' };
+    }
+  } catch (error) {
+    console.error("Failed to send confirmation email:", error);
+    return { success: false, message: 'Your message was received, but there was an error sending the confirmation email.' };
+  }
+
+
+  return { success: true, message: "Your message has been sent! A confirmation email is on its way." };
 }
 
 export async function submitUserMessage(history: Message[], userMessage: string): Promise<Message> {
