@@ -40,6 +40,15 @@ export function ChatPanel() {
     });
   };
   
+  const handleBack = () => {
+    const cancelMessage: Message = {
+      id: Date.now().toString(),
+      role: 'assistant',
+      content: "Ok, let's go back. How can I help you?",
+    };
+    setMessages(prev => [...prev, cancelMessage]);
+  };
+
   const lastMessage = messages[messages.length - 1];
 
   return (
@@ -49,7 +58,7 @@ export function ChatPanel() {
       {showFaq && <FaqSection />}
       
       {lastMessage?.component === 'human-form' ? (
-        <HumanForm />
+        <HumanForm onBack={handleBack} />
       ) : (
         <ChatInput onSubmit={handleSubmit} isLoading={isPending} />
       )}

@@ -17,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { contactHumanSupport } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useTransition, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronLeft } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -25,7 +25,11 @@ const formSchema = z.object({
   message: z.string().min(10, { message: 'Message must be at least 10 characters.' }),
 });
 
-export function HumanForm() {
+interface HumanFormProps {
+  onBack: () => void;
+}
+
+export function HumanForm({ onBack }: HumanFormProps) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [submitted, setSubmitted] = useState(false);
@@ -69,7 +73,13 @@ export function HumanForm() {
 
   return (
     <div className="p-6 border-t">
-      <h3 className="text-lg font-medium mb-4">Contact Support</h3>
+      <div className="flex items-center mb-4">
+        <Button variant="ghost" size="icon" className="mr-2" onClick={onBack}>
+          <ChevronLeft className="h-4 w-4" />
+          <span className="sr-only">Back</span>
+        </Button>
+        <h3 className="text-lg font-medium">Contact Support</h3>
+      </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
