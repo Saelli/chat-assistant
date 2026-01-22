@@ -64,7 +64,7 @@ export function HumanForm({ onBack }: HumanFormProps) {
   
   if (submitted) {
     return (
-      <div className="p-6 text-center flex flex-col items-center gap-4">
+      <div className="p-6 text-center flex flex-col items-center gap-4 flex-1 justify-center">
         <h3 className="text-lg font-semibold">Thank you!</h3>
         <p className="text-muted-foreground">A support agent will be in touch with you via email shortly.</p>
         <Button onClick={onBack}>
@@ -76,7 +76,7 @@ export function HumanForm({ onBack }: HumanFormProps) {
   }
 
   return (
-    <div className="p-6 border-t">
+    <div className="p-6 border-t flex-1 overflow-y-auto">
       <div className="flex items-center mb-4">
         <Button variant="ghost" size="icon" className="mr-2" onClick={onBack}>
           <ChevronLeft className="h-4 w-4" />

@@ -51,17 +51,17 @@ export function ChatPanel() {
 
   const lastMessage = messages[messages.length - 1];
 
+  if (lastMessage?.component === 'human-form') {
+    return <HumanForm onBack={handleBack} />;
+  }
+
   return (
     <div className="flex flex-col h-full">
       <ChatMessages messages={messages} isLoading={isPending} />
 
       {showFaq && <FaqSection />}
       
-      {lastMessage?.component === 'human-form' ? (
-        <HumanForm onBack={handleBack} />
-      ) : (
-        <ChatInput onSubmit={handleSubmit} isLoading={isPending} />
-      )}
+      <ChatInput onSubmit={handleSubmit} isLoading={isPending} />
     </div>
   );
 }
