@@ -9,6 +9,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const SendCustomerServiceEmailInputSchema = z.object({
   name: z.string().describe('The name of the user.'),
@@ -19,6 +22,7 @@ export type SendCustomerServiceEmailInput = z.infer<typeof SendCustomerServiceEm
 
 const SendCustomerServiceEmailOutputSchema = z.object({
   success: z.boolean().describe('Whether the email was sent successfully.'),
+  error: z.string().optional().describe('The error message if the email failed to send.'),
 });
 export type SendCustomerServiceEmailOutput = z.infer<typeof SendCustomerServiceEmailOutputSchema>;
 
@@ -33,21 +37,26 @@ const sendCustomerServiceEmailFlow = ai.defineFlow(
     outputSchema: SendCustomerServiceEmailOutputSchema,
   },
   async (input) => {
-    // In a real application, you would use an email service to send the email.
-    // For this demo, we'll just simulate sending the email by logging it to the console.
-    const customerServiceEmail = 'service@webassist.com';
-    console.log('--- Sending Customer Service Email ---');
-    console.log('To:', customerServiceEmail);
-    console.log('From:', input.email);
-    console.log('Subject:', `New support request from ${input.name}`);
-    console.log('Body:');
-    console.log(`You have a new support request from ${input.name} (${input.email}).`);
-    console.log('');
-    console.log('Message:');
-    console.log(input.message);
-    console.log('--- Email Sent ---');
-    
-    // Simulate a possible failure. For now, let's always succeed.
-    return { success: true };
+    const customerServiceEmail = process.env.SUPPORT_INBOX_EMAIL;
+    if (!customerServiceEmail) {
+      const errorMessage = 'SUPPORT_INBOX_EMAIL environment variable is not set.';
+      console.error(errorMessage);
+      return { success: false, error: 'Customer service email is not configured.' };
+    }
+
+    try {
+      await resend.emails.send({
+        from: process.env.EMAIL_FROM!,
+        to: customerServiceEmail,
+        reply_to: input.email,
+        subject: `New support request from ${input.name}`,
+        text: `You have a new support request from ${input.name} (${input.email}).\n\nMessage:\n${input.message}`,
+      });
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Failed to send customer service email:', errorMessage);
+      return { success: false, error: errorMessage };
+    }
   }
 );

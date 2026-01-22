@@ -9,6 +9,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {Resend} from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const SendConfirmationEmailInputSchema = z.object({
   name: z.string().describe('The name of the user.'),
@@ -19,6 +22,7 @@ export type SendConfirmationEmailInput = z.infer<typeof SendConfirmationEmailInp
 
 const SendConfirmationEmailOutputSchema = z.object({
   success: z.boolean().describe('Whether the email was sent successfully.'),
+  error: z.string().optional().describe('The error message if the email failed to send.'),
 });
 export type SendConfirmationEmailOutput = z.infer<typeof SendConfirmationEmailOutputSchema>;
 
@@ -33,21 +37,18 @@ const sendConfirmationEmailFlow = ai.defineFlow(
     outputSchema: SendConfirmationEmailOutputSchema,
   },
   async (input) => {
-    // In a real application, you would use an email service to send the email.
-    // For this demo, we'll just simulate sending the email by logging it to the console.
-    console.log('--- Sending Confirmation Email ---');
-    console.log('To:', input.email);
-    console.log('Subject:', 'We received your message');
-    console.log('Body:');
-    console.log(`Hi ${input.name},`);
-    console.log('');
-    console.log("Thank you for contacting us. We have received your message and a support agent will get back to you soon.");
-    console.log('');
-    console.log('Your message:');
-    console.log(input.message);
-    console.log('--- Email Sent ---');
-    
-    // Simulate a possible failure. For now, let's always succeed.
-    return { success: true };
+    try {
+      await resend.emails.send({
+        from: process.env.EMAIL_FROM!,
+        to: input.email,
+        subject: 'We received your message',
+        text: `Hi ${input.name},\n\nThank you for contacting us. We have received your message and a support agent will get back to you soon.\n\nYour message:\n${input.message}`,
+      });
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Failed to send confirmation email:', errorMessage);
+      return { success: false, error: errorMessage };
+    }
   }
 );

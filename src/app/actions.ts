@@ -20,9 +20,6 @@ export async function contactHumanSupport(values: z.infer<typeof contactHumanSch
     return { success: false, message: 'Invalid form data. Please check your inputs.' };
   }
   
-  // In a real application, you would create a support ticket here.
-  console.log('Human support request:', parsed.data);
-
   try {
     const [serviceEmailResult, emailResult] = await Promise.all([
       sendCustomerServiceEmail(parsed.data),
@@ -31,15 +28,16 @@ export async function contactHumanSupport(values: z.infer<typeof contactHumanSch
     
     if (!serviceEmailResult.success) {
       // Log this failure but don't block user feedback if user email was ok
-      console.error("Failed to send customer service email.");
+      console.error("Failed to send customer service email:", serviceEmailResult.error);
     }
 
     if (!emailResult.success) {
-      return { success: false, message: 'Your message was received, but we failed to send a confirmation email.' };
+      return { success: false, message: `Your message was received, but we failed to send a confirmation email. Error: ${emailResult.error}` };
     }
   } catch (error) {
-    console.error("Failed to send confirmation email:", error);
-    return { success: false, message: 'Your message was received, but there was an error sending the confirmation email.' };
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error has occurred.';
+    console.error("Failed to send emails:", error);
+    return { success: false, message: `Your message was received, but there was an unexpected error sending emails: ${errorMessage}` };
   }
 
 
