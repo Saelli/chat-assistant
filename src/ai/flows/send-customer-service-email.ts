@@ -11,8 +11,6 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const SendCustomerServiceEmailInputSchema = z.object({
   name: z.string().describe('The name of the user.'),
   email: z.string().email().describe('The email address of the user.'),
@@ -37,17 +35,18 @@ const sendCustomerServiceEmailFlow = ai.defineFlow(
     outputSchema: SendCustomerServiceEmailOutputSchema,
   },
   async (input) => {
-    const customerServiceEmail = process.env.SUPPORT_INBOX_EMAIL;
-    if (!customerServiceEmail) {
-      const errorMessage = 'SUPPORT_INBOX_EMAIL environment variable is not set.';
+    const { RESEND_API_KEY, SUPPORT_INBOX_EMAIL, EMAIL_FROM } = process.env;
+    if (!RESEND_API_KEY || !SUPPORT_INBOX_EMAIL || !EMAIL_FROM) {
+      const errorMessage = 'One or more email environment variables are not set.';
       console.error(errorMessage);
-      return { success: false, error: 'Customer service email is not configured.' };
+      return { success: false, error: 'Email service is not configured.' };
     }
+    const resend = new Resend(RESEND_API_KEY);
 
     try {
       await resend.emails.send({
-        from: process.env.EMAIL_FROM!,
-        to: customerServiceEmail,
+        from: EMAIL_FROM,
+        to: SUPPORT_INBOX_EMAIL,
         reply_to: input.email,
         subject: `New support request from ${input.name}`,
         text: `You have a new support request from ${input.name} (${input.email}).\n\nMessage:\n${input.message}`,

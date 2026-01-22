@@ -11,8 +11,6 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {Resend} from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const SendConfirmationEmailInputSchema = z.object({
   name: z.string().describe('The name of the user.'),
   email: z.string().email().describe('The email address of the user.'),
@@ -37,9 +35,17 @@ const sendConfirmationEmailFlow = ai.defineFlow(
     outputSchema: SendConfirmationEmailOutputSchema,
   },
   async (input) => {
+    const { RESEND_API_KEY, EMAIL_FROM } = process.env;
+    if (!RESEND_API_KEY || !EMAIL_FROM) {
+      const errorMessage = 'RESEND_API_KEY or EMAIL_FROM environment variable is not set.';
+      console.error(errorMessage);
+      return { success: false, error: 'Email service is not configured.' };
+    }
+    const resend = new Resend(RESEND_API_KEY);
+
     try {
       await resend.emails.send({
-        from: process.env.EMAIL_FROM!,
+        from: EMAIL_FROM,
         to: input.email,
         subject: 'We received your message',
         text: `Hi ${input.name},\n\nThank you for contacting us. We have received your message and a support agent will get back to you soon.\n\nYour message:\n${input.message}`,
